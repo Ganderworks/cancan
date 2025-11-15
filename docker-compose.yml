@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  canreplay:
+    build: .
+    container_name: cancan-replay
+    privileged: true  # Required for creating vcan interface
+    network_mode: host
+    volumes:
+      - ./can:/app/can:ro  # Mount CAN data directory as read-only
+    command: ["-csv", "can/rdu_onown_nomotor_on_thenoff_vehcan.csv", "-can", "vcan0"]
+
+  # Optional: Run candump to monitor traffic
+  monitor:
+    build: .
+    container_name: cancan-monitor
+    privileged: true
+    network_mode: host
+    entrypoint: ["/bin/sh"]
+    command:
+      - -c
+      - |
+        /app/setup-vcan.sh
+        echo "Monitoring vcan0..."
+        candump vcan0
+    profiles: ["monitor"]  # Only start with --profile monitor
